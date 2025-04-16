@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace server.Models
 {
-    public class Equipment
+    public class Workers
     {
         public Guid Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
+        public string Contact { get; set; } = string.Empty;
 
         public ICollection<Tasks>? Tasks { get; set; }
     }
