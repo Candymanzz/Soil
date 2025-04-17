@@ -45,7 +45,6 @@ namespace server.Controllers
             Guid field_id
         )
         {
-            // Проверяем существование культуры и поля
             var crop = await _context.Crops.FindAsync(crop_id);
             if (crop == null)
             {
@@ -58,7 +57,6 @@ namespace server.Controllers
                 return NotFound($"Поле с ID {field_id} не найдено");
             }
 
-            // Получаем историю урожаев для данной культуры на данном поле
             var harvestHistory = await _context
                 .PlantingPlans.Include(p => p.HarvestLogs)
                 .Where(p => p.Crop_id == crop_id && p.Field_id == field_id && p.HarvestLogs != null)
@@ -67,19 +65,15 @@ namespace server.Controllers
                 .Select(p => p.HarvestLogs)
                 .ToListAsync();
 
-            // Простой алгоритм прогнозирования на основе исторических данных
             double predictedYield = 0;
-            double confidence = 0.7; // Базовый уровень уверенности
+            double confidence = 0.7;
 
             if (harvestHistory.Any())
             {
-                // Средняя урожайность за последние 5 лет
                 predictedYield = harvestHistory.Average(h => h.Actual_yield);
 
-                // Корректируем прогноз на основе качества почвы
                 if (!string.IsNullOrEmpty(field.Soil_type))
                 {
-                    // Если тип почвы оптимальный для культуры
                     if (field.Soil_type.ToLower().Contains("чернозем"))
                     {
                         predictedYield *= 1.1;
@@ -87,8 +81,7 @@ namespace server.Controllers
                     }
                 }
 
-                // Корректируем прогноз на основе оптимальной температуры
-                if (Math.Abs(crop.Optimal_temperature - 20) <= 5) // Предполагаем, что 20°C - оптимальная температура
+                if (Math.Abs(crop.Optimal_temperature - 20) <= 5)
                 {
                     predictedYield *= 1.05;
                     confidence += 0.05;
@@ -96,7 +89,6 @@ namespace server.Controllers
             }
             else
             {
-                // Если нет исторических данных, используем ожидаемую урожайность из последнего плана посадки
                 var lastPlan = await _context
                     .PlantingPlans.Where(p => p.Crop_id == crop_id && p.Field_id == field_id)
                     .OrderByDescending(p => p.Planned_date)
@@ -108,13 +100,11 @@ namespace server.Controllers
                 }
                 else
                 {
-                    // Если нет планов посадки, используем базовую урожайность
-                    predictedYield = 3.0; // Базовое значение
+                    predictedYield = 3.0;
                 }
-                confidence = 0.5; // Меньшая уверенность при отсутствии исторических данных
+                confidence = 0.5;
             }
 
-            // Ограничиваем уверенность максимальным значением 0.95
             confidence = Math.Min(confidence, 0.95);
 
             var response = new YieldPredictionResponse
@@ -128,24 +118,12 @@ namespace server.Controllers
         }
     }
 
-    /// <summary>
-    /// Модель ответа с прогнозом урожайности
-    /// </summary>
     public class YieldPredictionResponse
     {
-        /// <summary>
-        /// Прогнозируемая урожайность
-        /// </summary>
         public double PredictedYield { get; set; }
 
-        /// <summary>
-        /// Единица измерения
-        /// </summary>
         public string Unit { get; set; }
 
-        /// <summary>
-        /// Уровень уверенности в прогнозе (от 0 до 1)
-        /// </summary>
         public double Confidence { get; set; }
     }
 }

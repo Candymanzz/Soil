@@ -41,7 +41,6 @@ namespace server.Controllers
         {
             try
             {
-                // Получаем все удобрения
                 var fertilizers = await _context
                     .Fertilizers.Include(f => f.FertilizationPlans)
                     .ToListAsync();
@@ -50,10 +49,8 @@ namespace server.Controllers
 
                 foreach (var fertilizer in fertilizers)
                 {
-                    // Рассчитываем текущий остаток
                     var currentStock = GetFertilizerQuantity(fertilizer);
 
-                    // Рассчитываем планируемое использование на ближайший месяц
                     var plannedUsage = await _context
                         .FertilizationPlans.Where(fp => fp.Fertilization_Id == fertilizer.Id)
                         .Where(fp =>
@@ -62,10 +59,8 @@ namespace server.Controllers
                         )
                         .SumAsync(fp => fp.Amount);
 
-                    // Рассчитываем критический уровень (20% от текущего остатка)
                     var criticalLevel = currentStock * 0.2m;
 
-                    // Если остаток меньше критического уровня или планируемое использование превышает остаток
                     if (currentStock <= criticalLevel || currentStock < plannedUsage)
                     {
                         var alert = new FertilizerStockAlert
@@ -99,62 +94,28 @@ namespace server.Controllers
             }
         }
 
-        /// <summary>
-        /// Получает количество удобрения
-        /// </summary>
-        /// <param name="fertilizer">Удобрение</param>
-        /// <returns>Количество удобрения</returns>
         private decimal GetFertilizerQuantity(Fertilizers fertilizer)
         {
-            // В реальном приложении здесь будет получение количества из базы данных
-            // Для демонстрации возвращаем фиксированное значение
-            return 1000.0m;
+            return 10.0m;
         }
     }
 
-    /// <summary>
-    /// Модель оповещения о состоянии запасов удобрений
-    /// </summary>
     public class FertilizerStockAlert
     {
-        /// <summary>
-        /// ID удобрения
-        /// </summary>
         public Guid FertilizerId { get; set; }
 
-        /// <summary>
-        /// Название удобрения
-        /// </summary>
         public string FertilizerName { get; set; }
 
-        /// <summary>
-        /// Текущий остаток (кг)
-        /// </summary>
         public decimal CurrentStock { get; set; }
 
-        /// <summary>
-        /// Планируемое использование в ближайший месяц (кг)
-        /// </summary>
         public decimal PlannedUsage { get; set; }
 
-        /// <summary>
-        /// Критический уровень (кг)
-        /// </summary>
         public decimal CriticalLevel { get; set; }
 
-        /// <summary>
-        /// Тип оповещения
-        /// </summary>
         public string AlertType { get; set; }
 
-        /// <summary>
-        /// Рекомендуемое количество для закупки (кг)
-        /// </summary>
         public decimal RecommendedPurchase { get; set; }
 
-        /// <summary>
-        /// Дата последнего обновления
-        /// </summary>
         public DateTime LastUpdated { get; set; }
     }
 }

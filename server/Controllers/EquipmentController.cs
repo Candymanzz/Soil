@@ -34,69 +34,69 @@ namespace server.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Инициализирует таблицу Equipment тестовыми данными
-        /// </summary>
-        /// <returns>Результат операции</returns>
-        /// <response code="200">Данные успешно добавлены</response>
-        /// <response code="500">Ошибка при добавлении данных</response>
-        [HttpPost("initialize")]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(500)]
-        public async Task<ActionResult<string>> InitializeEquipmentData()
-        {
-            try
-            {
-                // Проверяем, есть ли уже данные
-                if (await _context.Equipment.AnyAsync())
-                {
-                    return Ok("Таблица Equipment уже содержит данные");
-                }
+        // /// <summary>
+        // /// Инициализирует таблицу Equipment тестовыми данными
+        // /// </summary>
+        // /// <returns>Результат операции</returns>
+        // /// <response code="200">Данные успешно добавлены</response>
+        // /// <response code="500">Ошибка при добавлении данных</response>
+        // [HttpPost("initialize")]
+        // [ProducesResponseType(200)]
+        // [ProducesResponseType(500)]
+        // public async Task<ActionResult<string>> InitializeEquipmentData()
+        // {
+        //     try
+        //     {
+        //         // Проверяем, есть ли уже данные
+        //         if (await _context.Equipment.AnyAsync())
+        //         {
+        //             return Ok("Таблица Equipment уже содержит данные");
+        //         }
 
-                // Добавляем технику
-                var equipment = new Equipment[]
-                {
-                    new Equipment
-                    {
-                        Id = Guid.NewGuid(),
-                        Title = "Трактор МТЗ-82",
-                        Type = "Трактор",
-                        Status = "Доступен",
-                    },
-                    new Equipment
-                    {
-                        Id = Guid.NewGuid(),
-                        Title = "Сеялка СЗ-3.6",
-                        Type = "Сеялка",
-                        Status = "Доступен",
-                    },
-                    new Equipment
-                    {
-                        Id = Guid.NewGuid(),
-                        Title = "Опрыскиватель ОП-2000",
-                        Type = "Опрыскиватель",
-                        Status = "В ремонте",
-                    },
-                    new Equipment
-                    {
-                        Id = Guid.NewGuid(),
-                        Title = "Комбайн Дон-1500",
-                        Type = "Комбайн",
-                        Status = "Доступен",
-                    },
-                };
+        //         // Добавляем технику
+        //         var equipment = new Equipment[]
+        //         {
+        //             new Equipment
+        //             {
+        //                 Id = Guid.NewGuid(),
+        //                 Title = "Трактор МТЗ-82",
+        //                 Type = "Трактор",
+        //                 Status = "Доступен",
+        //             },
+        //             new Equipment
+        //             {
+        //                 Id = Guid.NewGuid(),
+        //                 Title = "Сеялка СЗ-3.6",
+        //                 Type = "Сеялка",
+        //                 Status = "Доступен",
+        //             },
+        //             new Equipment
+        //             {
+        //                 Id = Guid.NewGuid(),
+        //                 Title = "Опрыскиватель ОП-2000",
+        //                 Type = "Опрыскиватель",
+        //                 Status = "В ремонте",
+        //             },
+        //             new Equipment
+        //             {
+        //                 Id = Guid.NewGuid(),
+        //                 Title = "Комбайн Дон-1500",
+        //                 Type = "Комбайн",
+        //                 Status = "Доступен",
+        //             },
+        //         };
 
-                await _context.Equipment.AddRangeAsync(equipment);
-                await _context.SaveChangesAsync();
+        //         await _context.Equipment.AddRangeAsync(equipment);
+        //         await _context.SaveChangesAsync();
 
-                return Ok("Данные успешно добавлены в таблицу Equipment");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при инициализации данных в таблице Equipment");
-                return StatusCode(500, "Ошибка при инициализации данных в таблице Equipment");
-            }
-        }
+        //         return Ok("Данные успешно добавлены в таблицу Equipment");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Ошибка при инициализации данных в таблице Equipment");
+        //         return StatusCode(500, "Ошибка при инициализации данных в таблице Equipment");
+        //     }
+        // }
 
         /// <summary>
         /// Проверяет доступность техники на указанную дату
@@ -148,45 +148,21 @@ namespace server.Controllers
         }
     }
 
-    /// <summary>
-    /// Модель ответа о доступности техники
-    /// </summary>
     public class EquipmentAvailabilityResponse
     {
-        /// <summary>
-        /// Доступна ли техника
-        /// </summary>
         public bool IsAvailable { get; set; }
 
-        /// <summary>
-        /// Список конфликтующих задач
-        /// </summary>
         public List<ConflictingTaskInfo> ConflictingTasks { get; set; }
     }
 
-    /// <summary>
-    /// Модель информации о конфликтующей задаче
-    /// </summary>
     public class ConflictingTaskInfo
     {
-        /// <summary>
-        /// ID задачи
-        /// </summary>
         public Guid TaskId { get; set; }
 
-        /// <summary>
-        /// Название задачи
-        /// </summary>
         public string TaskName { get; set; }
 
-        /// <summary>
-        /// Планируемая дата задачи
-        /// </summary>
         public DateTime PlannedDate { get; set; }
 
-        /// <summary>
-        /// Статус задачи
-        /// </summary>
         public string Status { get; set; }
     }
 }

@@ -38,7 +38,6 @@ namespace server.Controllers
         {
             try
             {
-                // Получаем все поля с их планами посадки
                 var fields = await _context
                     .Fields.Include(f => f.PlantingPlans)
                     .ThenInclude(p => p.Crops)
@@ -50,7 +49,6 @@ namespace server.Controllers
 
                 foreach (var field in fields)
                 {
-                    // Получаем текущий план посадки (если есть)
                     var currentPlan = field
                         .PlantingPlans.Where(p =>
                             p.Planned_date <= DateTime.Now && p.HarvestLogs == null
@@ -58,17 +56,14 @@ namespace server.Controllers
                         .OrderByDescending(p => p.Planned_date)
                         .FirstOrDefault();
 
-                    // Получаем последний урожай (если есть)
                     var lastHarvest = field
                         .PlantingPlans.Where(p => p.HarvestLogs != null)
                         .Select(p => p.HarvestLogs)
                         .OrderByDescending(h => h.Harvest_date)
                         .FirstOrDefault();
 
-                    // Определяем статус поля
                     var status = DetermineFieldStatus(field, currentPlan, lastHarvest);
 
-                    // Создаем объект для карты
                     var fieldMapStatus = new FieldMapStatus
                     {
                         FieldId = field.Id,
@@ -99,9 +94,6 @@ namespace server.Controllers
             }
         }
 
-        /// <summary>
-        /// Определяет статус поля на основе текущего плана и последнего урожая
-        /// </summary>
         private string DetermineFieldStatus(
             Fields field,
             PlantingPlans currentPlan,
@@ -142,9 +134,6 @@ namespace server.Controllers
             }
         }
 
-        /// <summary>
-        /// Возвращает цвет для отображения статуса на карте
-        /// </summary>
         private string GetStatusColor(string status)
         {
             return status switch
@@ -161,69 +150,30 @@ namespace server.Controllers
         }
     }
 
-    /// <summary>
-    /// Модель статуса поля для отображения на карте
-    /// </summary>
     public class FieldMapStatus
     {
-        /// <summary>
-        /// ID поля
-        /// </summary>
         public Guid FieldId { get; set; }
 
-        /// <summary>
-        /// Название поля
-        /// </summary>
         public string FieldName { get; set; }
 
-        /// <summary>
-        /// Площадь поля (га)
-        /// </summary>
         public double Area { get; set; }
 
-        /// <summary>
-        /// Тип почвы
-        /// </summary>
         public string SoilType { get; set; }
 
-        /// <summary>
-        /// Координаты поля (GeoJSON)
-        /// </summary>
         public string Coordinates { get; set; }
 
-        /// <summary>
-        /// Статус поля
-        /// </summary>
         public string Status { get; set; }
 
-        /// <summary>
-        /// Текущая культура
-        /// </summary>
         public string CurrentCrop { get; set; }
 
-        /// <summary>
-        /// Дата посадки
-        /// </summary>
         public DateTime? PlantingDate { get; set; }
 
-        /// <summary>
-        /// Ожидаемая дата уборки
-        /// </summary>
         public DateTime? ExpectedHarvestDate { get; set; }
 
-        /// <summary>
-        /// Дата последней уборки
-        /// </summary>
         public DateTime? LastHarvestDate { get; set; }
 
-        /// <summary>
-        /// Урожайность последней уборки (т/га)
-        /// </summary>
         public double? LastHarvestYield { get; set; }
 
-        /// <summary>
-        /// Цвет для отображения на карте
-        /// </summary>
         public string Color { get; set; }
     }
 }

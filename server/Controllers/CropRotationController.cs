@@ -42,32 +42,28 @@ namespace server.Controllers
             Guid field_id
         )
         {
-            // Проверяем существование поля
             var field = await _context.Fields.FindAsync(field_id);
             if (field == null)
             {
                 return NotFound($"Поле с ID {field_id} не найдено");
             }
 
-            // Получаем историю посадок на поле за последние 3 года
             var plantingHistory = await _context
                 .PlantingPlans.Include(p => p.Crops)
                 .Where(p => p.Field_id == field_id)
                 .OrderByDescending(p => p.Planned_date)
-                .Take(10) // Берем последние 10 посадок для анализа
+                .Take(10)
                 .ToListAsync();
 
             var warnings = new List<RotationWarning>();
 
             if (plantingHistory.Count() >= 2)
             {
-                // Проверяем повторные посадки одной и той же культуры
                 for (int i = 0; i < plantingHistory.Count() - 1; i++)
                 {
                     var currentPlan = plantingHistory[i];
                     var previousPlan = plantingHistory[i + 1];
 
-                    // Если одна и та же культура высаживается два года подряд
                     if (currentPlan.Crop_id == previousPlan.Crop_id)
                     {
                         warnings.Add(
@@ -83,7 +79,6 @@ namespace server.Controllers
                         );
                     }
 
-                    // Проверяем интервал между посадками
                     var yearsBetweenPlantings =
                         (currentPlan.Planned_date - previousPlan.Planned_date).TotalDays / 365;
                     if (yearsBetweenPlantings < 2)
@@ -102,7 +97,6 @@ namespace server.Controllers
                     }
                 }
 
-                // Проверяем разнообразие культур
                 var uniqueCrops = plantingHistory.Select(p => p.Crop_id).Distinct().Count();
                 if (uniqueCrops < 3 && plantingHistory.Count() >= 5)
                 {
@@ -132,55 +126,25 @@ namespace server.Controllers
         }
     }
 
-    /// <summary>
-    /// Модель предупреждения о нарушении севооборота
-    /// </summary>
     public class RotationWarning
     {
-        /// <summary>
-        /// Тип предупреждения
-        /// </summary>
         public string Type { get; set; }
 
-        /// <summary>
-        /// Уровень серьезности (low, medium, high)
-        /// </summary>
         public string Severity { get; set; }
 
-        /// <summary>
-        /// Текст предупреждения
-        /// </summary>
         public string Message { get; set; }
 
-        /// <summary>
-        /// Год, к которому относится предупреждение
-        /// </summary>
         public int Year { get; set; }
     }
 
-    /// <summary>
-    /// Модель ответа с предупреждениями о севообороте
-    /// </summary>
     public class CropRotationWarningsResponse
     {
-        /// <summary>
-        /// ID поля
-        /// </summary>
         public Guid FieldId { get; set; }
 
-        /// <summary>
-        /// Название поля
-        /// </summary>
         public string FieldName { get; set; }
 
-        /// <summary>
-        /// Список предупреждений
-        /// </summary>
         public List<RotationWarning> Warnings { get; set; }
 
-        /// <summary>
-        /// Есть ли предупреждения
-        /// </summary>
         public bool HasWarnings { get; set; }
     }
 }

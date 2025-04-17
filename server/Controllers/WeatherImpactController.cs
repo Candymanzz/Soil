@@ -54,14 +54,12 @@ namespace server.Controllers
             DateTime date
         )
         {
-            // Проверяем существование поля
             var field = await _context.Fields.FindAsync(field_id);
             if (field == null)
             {
                 return NotFound($"Поле с ID {field_id} не найдено");
             }
 
-            // Получаем план посадки на указанную дату
             var plantingPlan = await _context
                 .PlantingPlans.Include(p => p.Crops)
                 .FirstOrDefaultAsync(p =>
@@ -79,10 +77,8 @@ namespace server.Controllers
 
             try
             {
-                // Получаем прогноз погоды из внешнего API
                 var weatherData = await GetWeatherForecast(field.Coordinates, date);
 
-                // Анализируем влияние погоды на посевы
                 var impact = AnalyzeWeatherImpact(weatherData, crop);
 
                 var response = new WeatherImpactResponse
@@ -113,8 +109,6 @@ namespace server.Controllers
 
         private async Task<WeatherData> GetWeatherForecast(string coordinates, DateTime date)
         {
-            // В реальном приложении здесь будет запрос к API погоды
-            // Для демонстрации возвращаем тестовые данные
             return new WeatherData
             {
                 Temperature = 15.5,
@@ -135,7 +129,6 @@ namespace server.Controllers
                 WindImpact = "good",
             };
 
-            // Анализ температуры
             var tempDiff = Math.Abs(weather.Temperature - crop.Optimal_temperature);
             if (tempDiff > 5)
             {
@@ -151,7 +144,6 @@ namespace server.Controllers
                 }
             }
 
-            // Анализ осадков
             if (weather.Precipitation > 5)
             {
                 impact.PrecipitationImpact = "poor";
@@ -166,7 +158,6 @@ namespace server.Controllers
                 }
             }
 
-            // Анализ влажности
             if (weather.Humidity < 40 || weather.Humidity > 80)
             {
                 impact.HumidityImpact = "poor";
@@ -181,7 +172,6 @@ namespace server.Controllers
                 }
             }
 
-            // Анализ ветра
             if (weather.WindSpeed > 10)
             {
                 impact.WindImpact = "poor";
@@ -267,127 +257,55 @@ namespace server.Controllers
         }
     }
 
-    /// <summary>
-    /// Модель данных о погоде
-    /// </summary>
     public class WeatherData
     {
-        /// <summary>
-        /// Температура (°C)
-        /// </summary>
         public double Temperature { get; set; }
 
-        /// <summary>
-        /// Количество осадков (мм)
-        /// </summary>
         public double Precipitation { get; set; }
 
-        /// <summary>
-        /// Влажность воздуха (%)
-        /// </summary>
         public double Humidity { get; set; }
 
-        /// <summary>
-        /// Скорость ветра (м/с)
-        /// </summary>
         public double WindSpeed { get; set; }
     }
 
-    /// <summary>
-    /// Модель анализа влияния погоды
-    /// </summary>
     public class WeatherImpact
     {
-        /// <summary>
-        /// Общая оценка (good, moderate, poor)
-        /// </summary>
         public string OverallRating { get; set; }
 
-        /// <summary>
-        /// Влияние температуры (good, moderate, poor)
-        /// </summary>
         public string TemperatureImpact { get; set; }
 
-        /// <summary>
-        /// Влияние осадков (good, moderate, poor)
-        /// </summary>
         public string PrecipitationImpact { get; set; }
 
-        /// <summary>
-        /// Влияние влажности (good, moderate, poor)
-        /// </summary>
         public string HumidityImpact { get; set; }
 
-        /// <summary>
-        /// Влияние ветра (good, moderate, poor)
-        /// </summary>
         public string WindImpact { get; set; }
     }
 
-    /// <summary>
-    /// Модель погодных условий
-    /// </summary>
     public class WeatherConditions
     {
-        /// <summary>
-        /// Температура (°C)
-        /// </summary>
         public double Temperature { get; set; }
 
-        /// <summary>
-        /// Количество осадков (мм)
-        /// </summary>
         public double Precipitation { get; set; }
 
-        /// <summary>
-        /// Влажность воздуха (%)
-        /// </summary>
         public double Humidity { get; set; }
 
-        /// <summary>
-        /// Скорость ветра (м/с)
-        /// </summary>
         public double WindSpeed { get; set; }
     }
 
-    /// <summary>
-    /// Модель ответа с анализом влияния погоды
-    /// </summary>
     public class WeatherImpactResponse
     {
-        /// <summary>
-        /// ID поля
-        /// </summary>
         public Guid FieldId { get; set; }
 
-        /// <summary>
-        /// Название поля
-        /// </summary>
         public string FieldName { get; set; }
 
-        /// <summary>
-        /// Дата анализа
-        /// </summary>
         public DateTime Date { get; set; }
 
-        /// <summary>
-        /// Название культуры
-        /// </summary>
         public string CropName { get; set; }
 
-        /// <summary>
-        /// Погодные условия
-        /// </summary>
         public WeatherConditions WeatherConditions { get; set; }
 
-        /// <summary>
-        /// Анализ влияния погоды
-        /// </summary>
         public WeatherImpact Impact { get; set; }
 
-        /// <summary>
-        /// Рекомендации
-        /// </summary>
         public List<string> Recommendations { get; set; }
     }
 }

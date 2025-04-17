@@ -12,7 +12,7 @@ namespace server.Data
             context.Database.EnsureCreated();
 
             // Проверяем, есть ли уже данные
-            if (context.Crops.Any())
+            if (context.Tasks.Any())
             {
                 return; // База данных уже содержит данные
             }

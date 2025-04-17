@@ -32,7 +32,6 @@ namespace server.Controllers
         {
             try
             {
-                // Получаем культуру и связанные данные
                 var crop = await _context
                     .Crops.Include(c => c.PlantingPlans)
                     .ThenInclude(p => p.Fields)
@@ -48,24 +47,21 @@ namespace server.Controllers
                     return NotFound($"Культура с ID {crop_id} не найдена");
                 }
 
-                // Получаем рыночные цены (в реальном приложении здесь был бы запрос к API биржи)
                 var marketPrice = await GetMarketPrice(crop.Title);
 
-                // Анализируем все посадки культуры
+                var harvestLogs =
+                    crop.PlantingPlans?.Where(p => p.HarvestLogs != null)
+                        .Select(p => p.HarvestLogs!)
+                        .ToList() ?? new List<HarvestLogs>();
+
                 var analysis = new CropProfitAnalysis
                 {
                     CropId = crop.Id,
                     CropName = crop.Title,
                     MarketPrice = marketPrice,
                     TotalArea = crop.PlantingPlans?.Sum(p => p.Fields?.Area ?? 0) ?? 0,
-                    TotalHarvested =
-                        crop.PlantingPlans?.Where(p => p.HarvestLogs != null)
-                            .Select(p => p.HarvestLogs!)
-                            .Sum(h => h.Actual_yield) ?? 0,
-                    AverageYield =
-                        crop.PlantingPlans?.Where(p => p.HarvestLogs != null)
-                            .Select(p => p.HarvestLogs!)
-                            .Average(h => h.Actual_yield) ?? 0,
+                    TotalHarvested = harvestLogs.Sum(h => h.Actual_yield),
+                    AverageYield = harvestLogs.Any() ? harvestLogs.Average(h => h.Actual_yield) : 0,
                     TotalCosts = CalculateTotalCosts(crop),
                     TotalRevenue = CalculateTotalRevenue(crop, marketPrice),
                     ProfitMargin = 0,
@@ -79,7 +75,6 @@ namespace server.Controllers
                     Recommendations = new List<string>(),
                 };
 
-                // Рассчитываем рентабельность
                 analysis.ProfitMargin =
                     analysis.TotalRevenue > 0
                         ? (analysis.TotalRevenue - analysis.TotalCosts)
@@ -87,7 +82,6 @@ namespace server.Controllers
                             * 100
                         : 0;
 
-                // Генерируем рекомендации
                 analysis.Recommendations = GenerateRecommendations(analysis);
 
                 return Ok(analysis);
@@ -101,8 +95,6 @@ namespace server.Controllers
 
         private async Task<decimal> GetMarketPrice(string cropName)
         {
-            // В реальном приложении здесь был бы запрос к API биржи
-            // Пока используем фиксированные цены для демонстрации
             return cropName.ToLower() switch
             {
                 "пшеница" => 15000m,
@@ -133,29 +125,27 @@ namespace server.Controllers
 
         private decimal CalculateLaborCosts(Crops crop)
         {
-            // В реальном приложении здесь был бы расчет затрат на рабочую силу
             return (crop.PlantingPlans?.Count ?? 0) * 50000m; // Примерная стоимость
         }
 
         private decimal CalculateEquipmentCosts(Crops crop)
         {
-            // В реальном приложении здесь был бы расчет затрат на технику
             return (crop.PlantingPlans?.Count ?? 0) * 100000m; // Примерная стоимость
         }
 
         private decimal CalculateOtherCosts(Crops crop)
         {
-            // В реальном приложении здесь был бы расчет прочих затрат
             return (crop.PlantingPlans?.Count ?? 0) * 25000m; // Примерная стоимость
         }
 
         private decimal CalculateTotalRevenue(Crops crop, decimal marketPrice)
         {
-            var totalYield =
+            var harvestLogs =
                 crop.PlantingPlans?.Where(p => p.HarvestLogs != null)
                     .Select(p => p.HarvestLogs!)
-                    .Sum(h => h.Actual_yield) ?? 0;
+                    .ToList() ?? new List<HarvestLogs>();
 
+            var totalYield = harvestLogs.Sum(h => h.Actual_yield);
             return (decimal)totalYield * marketPrice;
         }
 
